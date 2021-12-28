@@ -29,12 +29,13 @@ app.get('/beauty', function (req, res) {
 
 
 app.get('/', function (req, res) {
-    // How to use html file 
-    res.sendFile(__dirname + '/index.html');
+    // How to use ejs file 
+    // res.sendFile(__dirname + '/index.html');
+    res.render('index.ejs');
 });
 
 app.get('/write', function (req, res) {
-    res.sendFile(__dirname + '/write.html');
+    res.render('write.ejs');
 });
 
 app.post('/add', function (req, res) {
@@ -54,7 +55,7 @@ app.post('/add', function (req, res) {
 app.get('/todolist', function (req, res) {
 
     db.collection('post').find().toArray(function (err, result) {
-        console.log(result);
+        // console.log(result);
         res.render('list.ejs', { posts: result });
     });
 
@@ -66,5 +67,14 @@ app.delete('/delete', function (req, res) {
         db.collection('post').deleteOne(req.body,function(err,result){
             if (err) return console.log(err)
             console.log('삭제 완료');
+            res.status(200).send({message : '성공했습니다.'});
         });
+});
+
+app.get('/detail/:id',function(req,res){
+    db.collection('post').findOne({_id : parseInt(req.params.id)}, function(err, result){
+        if (result == null) return res.send('페이지가 존재하지 않습니다.');
+        console.log(result);
+        res.render('detail.ejs', { data: result });
+    });
 });
