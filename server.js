@@ -4,8 +4,9 @@ const express = require('express');
 const app = express();
 app.use(express.urlencoded({ extended: true }));
 
+//render가 가능한
 app.set('view engine', 'ejs');
-
+// mongoDB
 const MongoClient = require('mongodb').MongoClient;
 
 var db;
@@ -18,6 +19,9 @@ MongoClient.connect('mongodb+srv://admin:dks123@cluster0.dok0z.mongodb.net/myFir
         console.log('listening on 8080');
     });
 });
+// PUT 사용을 위한
+const methodOverride = require('method-override')
+app.use(methodOverride('_method'))
 
 app.get('/pet', function (req, res) {
     res.send('Pet page');
@@ -77,4 +81,21 @@ app.get('/detail/:id',function(req,res){
         console.log(result);
         res.render('detail.ejs', { data: result });
     });
+});
+
+app.get('/edit/:id', function (req, res) {
+    db.collection('post').findOne({_id : parseInt(req.params.id)},function(err, result){
+    res.render('edit.ejs',{post :result});
+    // console.log(result)
+});
+    
+});
+
+app.put('/edit', function (req, res) {
+    db.collection('post').updateOne({_id : parseInt(req.body.id)},{$set : {title : req.body.title, date : req.body.date}},function(err, result){
+        console.log('수정완료')
+    // console.log(result) 
+        res.redirect('/todolist')
+});
+    
 });
