@@ -99,3 +99,17 @@ app.put('/edit', function (req, res) {
 });
     
 });
+
+// 로그인시 필요한
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
+const session = require('express-session');
+
+// 미들웨어 요청과 응답사이에 실행되는 코드
+app.use(session({secret : 'secretCode', resave : true, saveUninitialized: false}));
+app.use(passport.initialize());
+app.use(passport.session()); 
+
+app.post('/loggin', function(req,res){
+    
+});
