@@ -8,14 +8,14 @@ app.use(express.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
 // mongoDB
 const MongoClient = require('mongodb').MongoClient;
+require('dotenv').config()
 
 var db;
-MongoClient.connect('mongodb+srv://admin:dks123@cluster0.dok0z.mongodb.net/myFirstDatabase?retryWrites=true&w=majority', function (err, client) {
+MongoClient.connect(process.env.DB_URL, function (err, client) {
     if (err) return console.log(err);
     db = client.db('todolist');
 
-    // port 8080
-    app.listen(8080, function () {
+    app.listen(process.env.PORT, function () {
         console.log('listening on 8080');
     });
 });
@@ -110,6 +110,60 @@ app.use(session({secret : 'secretCode', resave : true, saveUninitialized: false}
 app.use(passport.initialize());
 app.use(passport.session()); 
 
-app.post('/loggin', function(req,res){
-    
+app.get('/login', function(req,res){
+    res.render('login.ejs') 
 });
+
+app.get('/fail', function(req, res){
+    res.send('로그인 정보가 잘못되었습니다.')
+});
+
+app.post('/login',passport.authenticate('local',{
+    failureRedirect :'/fail'
+}), function(req,res){
+    res.redirect('/') 
+});
+
+passport.use(new LocalStrategy({
+    usernameField: 'id',
+    passwordField: 'pw',
+    session: true,
+    passReqToCallback: false,
+  }, function (insertID, insertPW, done) {
+    //console.log(insertID, insertPW);
+    db.collection('login').findOne({ id: insertID }, function (err, result) {
+      if (err) return done(err)
+      if (!result) return done(null, false, { message: '존재하지않는 아이디입니다.' })
+      if (insertPW == result.pw) {
+        return done(null, result)
+      } else {
+        return done(null, false, { message: '비밀번호가 틀렸습니다.' })
+      }
+    })
+  }));
+
+app.get('/mypage', checklogin, function (req, res) { 
+    console.log(req.user);
+    res.render('mypage.ejs', {user : req.user}) 
+});
+
+function checklogin(req, res, next) { 
+    if (req.user) { 
+        next() 
+    } 
+    else { 
+        res.send('로그인을 하셔야 볼 수 있는 페이지 입니다.') 
+    } 
+};
+
+//   로그인 정보를 세션으로 저장하는 코드
+passport.serializeUser(function (user, done) {
+    done(null, user.id)
+});
+
+//로그인한 개인정보를 디비에서 찾는 코드
+passport.deserializeUser(function (id, done) {
+    db.collection('login').findOne({id: id},function(err, result){
+        done(null, result)
+    })
+}); 
